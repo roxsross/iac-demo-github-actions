@@ -1,0 +1,14 @@
+.kiro/*
+*.out
+terraform.tfstate.d/*
+
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+
+settings.json
+
+.vscode
+
+terraform-web/
