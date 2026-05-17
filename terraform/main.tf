@@ -1,5 +1,5 @@
 # Recurso principal: genera un string aleatorio y lo almacena en SSM Parameter Store
-
+#check
 # Generador de string aleatorio
 resource "random_string" "this" {
   length  = var.random_length
