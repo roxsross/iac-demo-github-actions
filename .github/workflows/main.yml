@@ -1,44 +1,79 @@
-name: 'Terraform'
+name: Kiro Documentation Generator
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.github/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  generate-docs:
+    name: Generate Documentation
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform
+    timeout-minutes: 15
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      - name: Install Kiro CLI
+        run: curl -fsSL https://cli.kiro.dev/install | bash
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      run: terraform init
+      - name: Generate documentation
+        env:
+          KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
+          KIRO_LOG_NO_COLOR: "1"
+        run: |
+          kiro-cli chat \
+            --no-interactive \
+            --agent doc-generator \
+            --trust-all-tools \
+            "Escanea este repositorio y actualiza la documentación.
 
-    # Checks that all Terraform configuration files adhere to a canonical format
-    - name: Terraform Format
-      run: terraform fmt -check
+            Revisa la estructura completa del proyecto, el código fuente, los archivos de configuración y cualquier componente relevante para entender su funcionamiento actual.
 
-    #Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: terraform plan --var-file terraform.tfvars --out plan.out
+            Tareas principales:
+            - Si existe el directorio docs/, actualiza los archivos correspondientes allí.
+            - Si existe un archivo README.md, actualízalo para reflejar:
+              - Nuevas APIs públicas
+              - Interfaces modificadas
+              - Cambios relevantes en la forma de usar el proyecto
+              - Nuevos comandos, configuraciones o dependencias importantes
+            - Crea documentación para cualquier módulo público, servicio, función o componente que aún no esté documentado.
+            - Si detectas documentación desactualizada, corrígela para que coincida con el estado real del código.
+            - Mantén la documentación clara, ordenada y orientada a desarrolladores.
 
-    #   # On push to "main", build or change infrastructure according to Terraform configuration files
-    #   # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    # - name: Terraform Apply
-    #   if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-    #   run: terraform apply -auto-approve -input=false
+            Requisitos:
+            - No elimines información útil sin reemplazarla por una versión mejorada.
+            - Conserva el estilo general de la documentación existente cuando sea posible.
+            - Prioriza explicaciones precisas, ejemplos de uso y pasos reproducibles.
+            - La documentación final debe ayudar a entender, usar, mantener y extender este repositorio."
+
+      - name: Push documentation updates
+        run: |
+          if git diff --quiet; then
+            echo "No documentation changes detected."
+            exit 0
+          fi
+
+          BRANCH="docs/auto-update-$(date +%Y%m%d-%H%M%S)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add -A
+
+          git commit -m "docs: actualización automática de documentación vía Kiro
+
+          Generado por el agente doc-generator de Kiro.
+          Ejecutado tras un push a main."
+
+          git push -u origin "$BRANCH"
+
+          echo "📚 Actualizaciones de documentación enviadas a la rama: $BRANCH"
