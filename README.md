@@ -1,6 +1,6 @@
 # Terraform — Random + SSM Parameter Store
 
-Proyecto simple que genera un string aleatorio y lo almacena en AWS SSM Parameter Store usando MiniStack (LocalStack) como backend local.
+Proyecto simple que genera eeeun string aleatorio y lo almacena en AWS SSM Parameter Store usando MiniStack (LocalStack) como backend local.
 
 ## Estructura
 
